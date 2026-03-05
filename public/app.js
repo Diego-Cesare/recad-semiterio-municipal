@@ -10,6 +10,17 @@ function setStatus(message, type = '') {
   statusEl.className = `status ${type}`.trim();
 }
 
+async function parseApiResponse(response) {
+  const rawText = await response.text();
+  if (!rawText) return {};
+
+  try {
+    return JSON.parse(rawText);
+  } catch (error) {
+    return { message: rawText };
+  }
+}
+
 function renderPreview(files) {
   previewEl.innerHTML = '';
 
@@ -93,10 +104,10 @@ formEl.addEventListener('submit', async (event) => {
       body: formData,
     });
 
-    const data = await response.json();
+    const data = await parseApiResponse(response);
 
     if (!response.ok) {
-      setStatus(data.message || 'Falha ao enviar formulario.', 'error');
+      setStatus(data.message || `Falha ao enviar formulario (HTTP ${response.status}).`, 'error');
       return;
     }
 
@@ -105,6 +116,6 @@ formEl.addEventListener('submit', async (event) => {
     selectedImages = [];
     renderPreview([]);
   } catch (error) {
-    setStatus('Erro de rede ao enviar formulario.', 'error');
+    setStatus(`Erro de rede ao enviar formulario: ${error.message}`, 'error');
   }
 });

@@ -173,6 +173,27 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
+app.use((err, req, res, next) => {
+  if (!err) return next();
+
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ message: 'Cada imagem deve ter no maximo 10MB.' });
+    }
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({ message: 'Voce pode enviar no maximo 6 imagens.' });
+    }
+    return res.status(400).json({ message: `Erro de upload: ${err.message}` });
+  }
+
+  if (err.message === 'Apenas imagens JPG ou PNG sao permitidas.') {
+    return res.status(400).json({ message: err.message });
+  }
+
+  console.error('Erro nao tratado:', err);
+  return res.status(500).json({ message: 'Erro interno ao processar o formulario.' });
+});
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
