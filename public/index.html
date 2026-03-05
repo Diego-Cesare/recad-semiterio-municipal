@@ -14,17 +14,36 @@
         <form id="formulario">
           <label>
             Nome do propietário
-            <input type="text" name="nome" required />
+            <input
+              type="text"
+              name="nome"
+              placeholder="Nome completo do propietário"
+              required
+            />
           </label>
 
           <label>
             CPF do propietário
-            <input type="text" name="cpf" required />
+            <input
+              type="text"
+              name="cpf"
+              maxlength="14"
+              inputmode="numeric"
+              placeholder="CPF com 11 digitos"
+              required
+            />
           </label>
 
           <label>
-            Telefone para contatos
-            <input type="text" name="telefone" required />
+            Telefone para contato
+            <input
+              type="text"
+              name="telefone"
+              maxlength="14"
+              inputmode="numeric"
+              placeholder="(DDD)9XXXX-XXXX"
+              required
+            />
           </label>
 
           <label>
@@ -34,7 +53,14 @@
 
           <label>
             Email
-            <input type="email" name="email" id="email" required />
+            <input
+              type="email"
+              name="email"
+              id="email"
+              inputmode="email"
+              placeholder="EX: seunomedeusuario@gmail.com"
+              required
+            />
           </label>
           <div class="image-description">
             <p class="subtitle">Adicione as fotos de:</p>

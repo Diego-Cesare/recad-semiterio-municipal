@@ -1,7 +1,7 @@
-const express = require('express');
-const multer = require('multer');
-const PDFDocument = require('pdfkit');
-const dotenv = require('dotenv');
+const express = require("express");
+const multer = require("multer");
+const PDFDocument = require("pdfkit");
+const dotenv = require("dotenv");
 
 dotenv.config();
 
@@ -9,19 +9,21 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const hasResendConfig =
-  !!process.env.RESEND_API_KEY && !!process.env.RESEND_FROM && !!process.env.TARGET_EMAIL;
+  !!process.env.RESEND_API_KEY &&
+  !!process.env.RESEND_FROM &&
+  !!process.env.TARGET_EMAIL;
 
 if (!hasResendConfig) {
-  const resendKeys = ['RESEND_API_KEY', 'RESEND_FROM', 'TARGET_EMAIL'];
+  const resendKeys = ["RESEND_API_KEY", "RESEND_FROM", "TARGET_EMAIL"];
   const missingResendKeys = resendKeys.filter((key) => !process.env[key]);
   console.warn(
-    `Resend incompleto. Envio de e-mail indisponivel. Variaveis ausentes: ${missingResendKeys.join(', ')}`
+    `Resend incompleto. Envio de e-mail indisponivel. Variaveis ausentes: ${missingResendKeys.join(", ")}`,
   );
 }
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static("public"));
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -30,28 +32,28 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024,
   },
   fileFilter: (req, file, cb) => {
-    const supportedTypes = ['image/jpeg', 'image/png'];
+    const supportedTypes = ["image/jpeg", "image/png"];
     if (file.mimetype && supportedTypes.includes(file.mimetype)) {
       return cb(null, true);
     }
-    return cb(new Error('Apenas imagens JPG ou PNG sao permitidas.'));
+    return cb(new Error("Apenas imagens JPG ou PNG sao permitidas."));
   },
 });
 
 function normalizeText(value) {
-  return (value || '').toString().trim();
+  return (value || "").toString().trim();
 }
 
 function generatePdfBuffer(formData, files) {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margin: 40 });
+    const doc = new PDFDocument({ size: "A4", margin: 40 });
     const chunks = [];
 
-    doc.on('data', (chunk) => chunks.push(chunk));
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
+    doc.on("data", (chunk) => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
 
-    doc.fontSize(20).text('Formulario de Cadastro', { align: 'center' });
+    doc.fontSize(20).text("Formulario de Recadastro", { align: "center" });
     doc.moveDown();
     doc.fontSize(12);
 
@@ -64,7 +66,7 @@ function generatePdfBuffer(formData, files) {
 
     if (files.length > 0) {
       doc.addPage();
-      doc.fontSize(16).text('Imagens enviadas', { align: 'center' });
+      doc.fontSize(16).text("Imagens enviadas", { align: "center" });
       doc.moveDown();
 
       files.forEach((file, index) => {
@@ -78,11 +80,11 @@ function generatePdfBuffer(formData, files) {
         try {
           doc.image(file.buffer, {
             fit: [500, 650],
-            align: 'center',
-            valign: 'center',
+            align: "center",
+            valign: "center",
           });
         } catch (error) {
-          doc.text('Nao foi possivel renderizar esta imagem no PDF.');
+          doc.text("Nao foi possivel renderizar esta imagem no PDF.");
         }
       });
     }
@@ -93,47 +95,54 @@ function generatePdfBuffer(formData, files) {
 
 function mapResendError(statusCode, errorMessage) {
   if (statusCode === 401 || statusCode === 403) {
-    return 'Falha de autenticacao Resend. Verifique RESEND_API_KEY.';
+    return "Falha de autenticacao Resend. Verifique RESEND_API_KEY.";
   }
 
   if (statusCode === 422) {
-    return `Resend rejeitou os dados do e-mail: ${errorMessage || 'verifique RESEND_FROM e TARGET_EMAIL.'}`;
+    return `Resend rejeitou os dados do e-mail: ${errorMessage || "verifique RESEND_FROM e TARGET_EMAIL."}`;
   }
 
   if (statusCode >= 500) {
-    return 'Falha temporaria na Resend. Tente novamente em instantes.';
+    return "Falha temporaria na Resend. Tente novamente em instantes.";
   }
 
   return null;
 }
 
-async function sendEmailWithResend({ nome, cpf, telefone, familiar, email, pdfBuffer }) {
+async function sendEmailWithResend({
+  nome,
+  cpf,
+  telefone,
+  familiar,
+  email,
+  pdfBuffer,
+}) {
   const payload = {
     from: process.env.RESEND_FROM,
     to: [process.env.TARGET_EMAIL],
     subject: `Novo formulario - ${nome}`,
     text: [
-      'Novo formulario recebido.',
+      "Novo formulario recebido.",
       `Nome: ${nome}`,
       `CPF: ${cpf}`,
       `Telefone: ${telefone}`,
       `Familiar: ${familiar}`,
       `Email informado: ${email}`,
-    ].join('\n'),
+    ].join("\n"),
     reply_to: email,
     attachments: [
       {
         filename: `formulario-${Date.now()}.pdf`,
-        content: pdfBuffer.toString('base64'),
+        content: pdfBuffer.toString("base64"),
       },
     ],
   };
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
   });
@@ -146,8 +155,13 @@ async function sendEmailWithResend({ nome, cpf, telefone, familiar, email, pdfBu
   }
 
   if (!response.ok) {
-    const resendMessage = mapResendError(response.status, responseBody?.message);
-    const error = new Error(resendMessage || 'Erro ao enviar email pela Resend.');
+    const resendMessage = mapResendError(
+      response.status,
+      responseBody?.message,
+    );
+    const error = new Error(
+      resendMessage || "Erro ao enviar email pela Resend.",
+    );
     error.statusCode = response.status;
     error.details = responseBody;
     throw error;
@@ -156,11 +170,12 @@ async function sendEmailWithResend({ nome, cpf, telefone, familiar, email, pdfBu
   return responseBody;
 }
 
-app.post('/api/send-pdf', upload.array('images', 6), async (req, res) => {
+app.post("/api/send-pdf", upload.array("images", 6), async (req, res) => {
   try {
     if (!hasResendConfig) {
       return res.status(500).json({
-        message: 'Resend nao configurado no servidor. Preencha RESEND_API_KEY, RESEND_FROM e TARGET_EMAIL.',
+        message:
+          "Resend nao configurado no servidor. Preencha RESEND_API_KEY, RESEND_FROM e TARGET_EMAIL.",
       });
     }
 
@@ -171,13 +186,25 @@ app.post('/api/send-pdf', upload.array('images', 6), async (req, res) => {
     const email = normalizeText(req.body.email);
 
     if (!nome || !cpf || !telefone || !familiar || !email) {
-      return res.status(400).json({ message: 'Preencha todos os campos obrigatorios.' });
+      return res
+        .status(400)
+        .json({ message: "Preencha todos os campos obrigatorios." });
     }
 
     const files = req.files || [];
-    const pdfBuffer = await generatePdfBuffer({ nome, cpf, telefone, familiar, email }, files);
+    const pdfBuffer = await generatePdfBuffer(
+      { nome, cpf, telefone, familiar, email },
+      files,
+    );
 
-    await sendEmailWithResend({ nome, cpf, telefone, familiar, email, pdfBuffer });
+    await sendEmailWithResend({
+      nome,
+      cpf,
+      telefone,
+      familiar,
+      email,
+      pdfBuffer,
+    });
 
     const imageCount = files.length;
     return res.json({
@@ -185,49 +212,62 @@ app.post('/api/send-pdf', upload.array('images', 6), async (req, res) => {
     });
   } catch (error) {
     if (error instanceof multer.MulterError) {
-      return res.status(400).json({ message: `Erro de upload: ${error.message}` });
+      return res
+        .status(400)
+        .json({ message: `Erro de upload: ${error.message}` });
     }
 
-    if (error && error.message === 'Apenas imagens JPG ou PNG sao permitidas.') {
+    if (
+      error &&
+      error.message === "Apenas imagens JPG ou PNG sao permitidas."
+    ) {
       return res.status(400).json({ message: error.message });
     }
 
     if (error?.statusCode) {
-      console.error('Erro Resend ao enviar formulario:', {
+      console.error("Erro Resend ao enviar formulario:", {
         statusCode: error.statusCode,
         details: error.details,
       });
       return res.status(500).json({ message: error.message });
     }
 
-    console.error('Erro ao enviar formulario:', error);
-    return res.status(500).json({ message: 'Erro interno ao processar o formulario.' });
+    console.error("Erro ao enviar formulario:", error);
+    return res
+      .status(500)
+      .json({ message: "Erro interno ao processar o formulario." });
   }
 });
 
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
 });
 
 app.use((err, req, res, next) => {
   if (!err) return next();
 
   if (err instanceof multer.MulterError) {
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ message: 'Cada imagem deve ter no maximo 10MB.' });
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res
+        .status(400)
+        .json({ message: "Cada imagem deve ter no maximo 10MB." });
     }
-    if (err.code === 'LIMIT_FILE_COUNT') {
-      return res.status(400).json({ message: 'Voce pode enviar no maximo 6 imagens.' });
+    if (err.code === "LIMIT_FILE_COUNT") {
+      return res
+        .status(400)
+        .json({ message: "Voce pode enviar no maximo 6 imagens." });
     }
     return res.status(400).json({ message: `Erro de upload: ${err.message}` });
   }
 
-  if (err.message === 'Apenas imagens JPG ou PNG sao permitidas.') {
+  if (err.message === "Apenas imagens JPG ou PNG sao permitidas.") {
     return res.status(400).json({ message: err.message });
   }
 
-  console.error('Erro nao tratado:', err);
-  return res.status(500).json({ message: 'Erro interno ao processar o formulario.' });
+  console.error("Erro nao tratado:", err);
+  return res
+    .status(500)
+    .json({ message: "Erro interno ao processar o formulario." });
 });
 
 app.listen(port, () => {
