@@ -17,7 +17,11 @@ const hasSmtpConfig =
   !!process.env.TARGET_EMAIL;
 
 if (!hasSmtpConfig) {
-  console.warn('SMTP incompleto. Envio de e-mail ficara indisponivel ate configurar variaveis.');
+  const smtpKeys = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'TARGET_EMAIL'];
+  const missingSmtpKeys = smtpKeys.filter((key) => !process.env[key]);
+  console.warn(
+    `SMTP incompleto. Envio de e-mail indisponivel. Variaveis ausentes: ${missingSmtpKeys.join(', ')}`
+  );
 }
 
 app.use(express.urlencoded({ extended: true }));
@@ -107,6 +111,25 @@ function createTransporter() {
   });
 }
 
+function mapSmtpError(error) {
+  const code = error?.code || '';
+  const responseCode = error?.responseCode || 0;
+
+  if (code === 'EAUTH' || responseCode === 535) {
+    return 'Falha de autenticacao SMTP. Verifique SMTP_USER e SMTP_PASS (App Password).';
+  }
+
+  if (code === 'ESOCKET' || code === 'ECONNECTION' || code === 'ETIMEDOUT') {
+    return 'Falha de conexao com o servidor SMTP. Verifique SMTP_HOST/SMTP_PORT.';
+  }
+
+  if (responseCode === 550 || responseCode === 553) {
+    return 'Servidor SMTP rejeitou remetente ou destinatario. Verifique SMTP_FROM e TARGET_EMAIL.';
+  }
+
+  return null;
+}
+
 app.post('/api/send-pdf', upload.array('images', 6), async (req, res) => {
   try {
     if (!hasSmtpConfig) {
@@ -162,6 +185,17 @@ app.post('/api/send-pdf', upload.array('images', 6), async (req, res) => {
 
     if (error && error.message === 'Apenas imagens JPG ou PNG sao permitidas.') {
       return res.status(400).json({ message: error.message });
+    }
+
+    const smtpMessage = mapSmtpError(error);
+    if (smtpMessage) {
+      console.error('Erro SMTP ao enviar formulario:', {
+        code: error?.code,
+        responseCode: error?.responseCode,
+        command: error?.command,
+        response: error?.response,
+      });
+      return res.status(500).json({ message: smtpMessage });
     }
 
     console.error('Erro ao enviar formulario:', error);
