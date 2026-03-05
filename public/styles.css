@@ -3,7 +3,7 @@
   --card: #ffffff;
   --text: #1b1f24;
   --muted: #5f6b7a;
-  --primary: #0a7a5b;
+  --primary: #0a3a7a;
   --primary-hover: #08664c;
   --border: #d5dde8;
   --danger: #c0392b;
@@ -11,29 +11,39 @@
 }
 
 * {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  height: 100dvh;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: radial-gradient(circle at top right, #dcecf7, var(--bg) 50%);
   color: var(--text);
 }
 
 .container {
   max-width: 720px;
-  margin: 40px auto;
+  margin: 10px auto;
   padding: 0 16px;
 }
 
 h1 {
-  margin: 0;
+  margin-bottom: 10px;
 }
 
 .subtitle {
   color: var(--muted);
+  font-size: 1rem;
   margin-bottom: 20px;
+}
+
+.subtitle-item {
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: bold;
 }
 
 .card {
@@ -56,7 +66,9 @@ form {
 label {
   display: grid;
   gap: 6px;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  color: var(--muted);
+  font-weight: 600;
 }
 
 input {
@@ -64,6 +76,16 @@ input {
   border-radius: 8px;
   padding: 10px;
   font-size: 1rem;
+}
+
+.image-add {
+  background-color: var(--ok);
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  text-align: center;
+  cursor: pointer;
 }
 
 .button {
