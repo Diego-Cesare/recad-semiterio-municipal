@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Formulario com PDF</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Formulario PDF</h1>
+      <p class="subtitle">Preencha os dados, anexe ate 6 imagens e envie em PDF por e-mail.</p>
+
+      <section class="card">
+        <form id="formulario">
+          <label>
+            Nome
+            <input type="text" name="nome" required />
+          </label>
+
+          <label>
+            CPF
+            <input type="text" name="cpf" required />
+          </label>
+
+          <label>
+            Telefone
+            <input type="text" name="telefone" required />
+          </label>
+
+          <label>
+            Nome de um familiar
+            <input type="text" name="familiar" required />
+          </label>
+
+          <label>
+            Email
+            <input type="email" name="email" id="email" required />
+          </label>
+
+          <label>
+            Imagens (maximo 6)
+            <input
+              type="file"
+              name="images"
+              id="images"
+              accept="image/png,image/jpeg,image/jpg"
+              multiple
+            />
+          </label>
+          <p class="hint">Preview das imagens selecionadas:</p>
+          <div id="preview" class="preview-grid" aria-live="polite"></div>
+
+          <button type="submit" class="button">Gerar PDF e Enviar</button>
+        </form>
+
+        <p id="status" class="status"></p>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
