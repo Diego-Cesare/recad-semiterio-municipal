@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: formulario-pdf-app
+    name: recad-semiterio-municipal
     env: node
     plan: free
     buildCommand: npm install
@@ -12,14 +12,14 @@ services:
       - key: PORT
         value: 10000
       - key: SMTP_HOST
-        sync: false
+        value: smtp.gmail.com
       - key: SMTP_PORT
-        sync: false
+        value: 587
       - key: SMTP_USER
-        sync: false
+        value: diegocesare300491@gmail.com
       - key: SMTP_PASS
         sync: false
       - key: SMTP_FROM
-        sync: false
+        value: diegocesare300491@gmail.com
       - key: TARGET_EMAIL
         value: diegocesare300491@gmail.com

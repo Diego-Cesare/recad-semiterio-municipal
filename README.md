@@ -37,18 +37,15 @@ Acesse `http://localhost:3000`.
 
 ## Deploy na Render
 1. Suba este projeto para um repositorio Git.
-2. Na Render, crie um novo `Web Service` apontando para o repo.
-3. Use:
-- Build Command: `npm install`
-- Start Command: `npm start`
-
-4. Configure variaveis de ambiente:
+2. Na Render, crie um novo `Blueprint` apontando para o repo (usa `render.yaml`).
+3. O `render.yaml` ja aplica automaticamente:
 - `SMTP_HOST`
 - `SMTP_PORT`
 - `SMTP_USER`
-- `SMTP_PASS`
 - `SMTP_FROM`
 - `TARGET_EMAIL`
+4. No painel da Render, em `Environment`, preencha manualmente apenas:
+- `SMTP_PASS`
 
 ## Rotas principais
 - `GET /` pagina do app
