@@ -7,12 +7,12 @@ Webapp simples com:
 - Envio do PDF por e-mail para um destinatario fixo
 
 ## Como funciona o remetente
-O app envia e-mail via SMTP configurado no servidor.
+O app envia e-mail via API da Resend.
 O e-mail informado pelo usuario no formulario e usado como `reply-to`.
 
 ## Requisitos
 - Node.js 18+
-- Conta de e-mail SMTP para envio (Gmail com App Password, SendGrid, Resend SMTP etc.)
+- Conta na Resend com API Key
 
 ## Configuracao local
 1. Instale dependencias:
@@ -39,13 +39,10 @@ Acesse `http://localhost:3000`.
 1. Suba este projeto para um repositorio Git.
 2. Na Render, crie um novo `Blueprint` apontando para o repo (usa `render.yaml`).
 3. O `render.yaml` ja aplica automaticamente:
-- `SMTP_HOST`
-- `SMTP_PORT`
-- `SMTP_USER`
-- `SMTP_FROM`
+- `RESEND_FROM`
 - `TARGET_EMAIL`
 4. No painel da Render, em `Environment`, preencha manualmente apenas:
-- `SMTP_PASS`
+- `RESEND_API_KEY`
 
 ## Rotas principais
 - `GET /` pagina do app
@@ -54,4 +51,4 @@ Acesse `http://localhost:3000`.
 
 ## Seguranca
 - Nunca commitar `.env`
-- Em producao, mantenha credenciais SMTP apenas na Render
+- Em producao, mantenha `RESEND_API_KEY` apenas na Render

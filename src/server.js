@@ -1,7 +1,6 @@
 const express = require('express');
 const multer = require('multer');
 const PDFDocument = require('pdfkit');
-const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -9,18 +8,14 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-const hasSmtpConfig =
-  !!process.env.SMTP_HOST &&
-  !!process.env.SMTP_PORT &&
-  !!process.env.SMTP_USER &&
-  !!process.env.SMTP_PASS &&
-  !!process.env.TARGET_EMAIL;
+const hasResendConfig =
+  !!process.env.RESEND_API_KEY && !!process.env.RESEND_FROM && !!process.env.TARGET_EMAIL;
 
-if (!hasSmtpConfig) {
-  const smtpKeys = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'TARGET_EMAIL'];
-  const missingSmtpKeys = smtpKeys.filter((key) => !process.env[key]);
+if (!hasResendConfig) {
+  const resendKeys = ['RESEND_API_KEY', 'RESEND_FROM', 'TARGET_EMAIL'];
+  const missingResendKeys = resendKeys.filter((key) => !process.env[key]);
   console.warn(
-    `SMTP incompleto. Envio de e-mail indisponivel. Variaveis ausentes: ${missingSmtpKeys.join(', ')}`
+    `Resend incompleto. Envio de e-mail indisponivel. Variaveis ausentes: ${missingResendKeys.join(', ')}`
   );
 }
 
@@ -96,45 +91,76 @@ function generatePdfBuffer(formData, files) {
   });
 }
 
-function createTransporter() {
-  const portValue = Number(process.env.SMTP_PORT || 587);
-  const secure = portValue === 465;
-
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: portValue,
-    secure,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-}
-
-function mapSmtpError(error) {
-  const code = error?.code || '';
-  const responseCode = error?.responseCode || 0;
-
-  if (code === 'EAUTH' || responseCode === 535) {
-    return 'Falha de autenticacao SMTP. Verifique SMTP_USER e SMTP_PASS (App Password).';
+function mapResendError(statusCode, errorMessage) {
+  if (statusCode === 401 || statusCode === 403) {
+    return 'Falha de autenticacao Resend. Verifique RESEND_API_KEY.';
   }
 
-  if (code === 'ESOCKET' || code === 'ECONNECTION' || code === 'ETIMEDOUT') {
-    return 'Falha de conexao com o servidor SMTP. Verifique SMTP_HOST/SMTP_PORT.';
+  if (statusCode === 422) {
+    return `Resend rejeitou os dados do e-mail: ${errorMessage || 'verifique RESEND_FROM e TARGET_EMAIL.'}`;
   }
 
-  if (responseCode === 550 || responseCode === 553) {
-    return 'Servidor SMTP rejeitou remetente ou destinatario. Verifique SMTP_FROM e TARGET_EMAIL.';
+  if (statusCode >= 500) {
+    return 'Falha temporaria na Resend. Tente novamente em instantes.';
   }
 
   return null;
 }
 
+async function sendEmailWithResend({ nome, cpf, telefone, familiar, email, pdfBuffer }) {
+  const payload = {
+    from: process.env.RESEND_FROM,
+    to: [process.env.TARGET_EMAIL],
+    subject: `Novo formulario - ${nome}`,
+    text: [
+      'Novo formulario recebido.',
+      `Nome: ${nome}`,
+      `CPF: ${cpf}`,
+      `Telefone: ${telefone}`,
+      `Familiar: ${familiar}`,
+      `Email informado: ${email}`,
+    ].join('\n'),
+    reply_to: email,
+    attachments: [
+      {
+        filename: `formulario-${Date.now()}.pdf`,
+        content: pdfBuffer.toString('base64'),
+      },
+    ],
+  };
+
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  let responseBody = {};
+  try {
+    responseBody = await response.json();
+  } catch (error) {
+    responseBody = {};
+  }
+
+  if (!response.ok) {
+    const resendMessage = mapResendError(response.status, responseBody?.message);
+    const error = new Error(resendMessage || 'Erro ao enviar email pela Resend.');
+    error.statusCode = response.status;
+    error.details = responseBody;
+    throw error;
+  }
+
+  return responseBody;
+}
+
 app.post('/api/send-pdf', upload.array('images', 6), async (req, res) => {
   try {
-    if (!hasSmtpConfig) {
+    if (!hasResendConfig) {
       return res.status(500).json({
-        message: 'SMTP nao configurado no servidor. Preencha as variaveis de ambiente.',
+        message: 'Resend nao configurado no servidor. Preencha RESEND_API_KEY, RESEND_FROM e TARGET_EMAIL.',
       });
     }
 
@@ -150,29 +176,8 @@ app.post('/api/send-pdf', upload.array('images', 6), async (req, res) => {
 
     const files = req.files || [];
     const pdfBuffer = await generatePdfBuffer({ nome, cpf, telefone, familiar, email }, files);
-    const transporter = createTransporter();
 
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: process.env.TARGET_EMAIL,
-      subject: `Novo formulario - ${nome}`,
-      text: [
-        'Novo formulario recebido.',
-        `Nome: ${nome}`,
-        `CPF: ${cpf}`,
-        `Telefone: ${telefone}`,
-        `Familiar: ${familiar}`,
-        `Email informado: ${email}`,
-      ].join('\n'),
-      replyTo: email,
-      attachments: [
-        {
-          filename: `formulario-${Date.now()}.pdf`,
-          content: pdfBuffer,
-          contentType: 'application/pdf',
-        },
-      ],
-    });
+    await sendEmailWithResend({ nome, cpf, telefone, familiar, email, pdfBuffer });
 
     const imageCount = files.length;
     return res.json({
@@ -187,15 +192,12 @@ app.post('/api/send-pdf', upload.array('images', 6), async (req, res) => {
       return res.status(400).json({ message: error.message });
     }
 
-    const smtpMessage = mapSmtpError(error);
-    if (smtpMessage) {
-      console.error('Erro SMTP ao enviar formulario:', {
-        code: error?.code,
-        responseCode: error?.responseCode,
-        command: error?.command,
-        response: error?.response,
+    if (error?.statusCode) {
+      console.error('Erro Resend ao enviar formulario:', {
+        statusCode: error.statusCode,
+        details: error.details,
       });
-      return res.status(500).json({ message: smtpMessage });
+      return res.status(500).json({ message: error.message });
     }
 
     console.error('Erro ao enviar formulario:', error);
