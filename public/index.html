@@ -3,15 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Recadastro Cemitério Bom Pastor</title>
+    <title>RPCBP</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <main class="container">
-      <h1>Cemitério Bom Pastor</h1>
-      <p class="subtitle">Recadastro de Propietários</p>
-      <section class="card">
-        <form id="formulario">
+      <h1>RPCBP</h1>
+      <p class="subtitle">Recadastro de Propietário Cemitério Bom Pastor</p>
+      <form id="formulario">
+        <fieldset>
+          <legend>Dados Pessoais</legend>
+          <p>Dados do propietário do terreno.</p>
           <label>
             Nome do propietário
             <input
@@ -45,45 +47,62 @@
               required
             />
           </label>
-
           <label>
-            Nome de um familiar
-            <input type="text" name="familiar" required />
-          </label>
-
-          <label>
-            Email
+            Email (opicional)
             <input
               type="email"
               name="email"
               id="email"
               inputmode="email"
               placeholder="EX: seunomedeusuario@gmail.com"
+            />
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Dados do herdeiro</legend>
+          <p>Adicione o nome do herdeiro do terreno.</p>
+          <label>
+            Herdeiro
+            <input
+              type="text"
+              name="familiar"
+              placeholder="Nome completo"
               required
             />
           </label>
-          <div class="image-description">
-            <p class="subtitle">Adicione as fotos de:</p>
-            <p class="subtitle-item">Certidão de óbito</p>
-            <p class="subtitle-item">Comprovante de cadastro</p>
-          </div>
-          <label for="images" class="image-add">Escolher Imagens</label>
-          <input
-            type="file"
-            name="images"
-            id="images"
-            accept="image/png,image/jpeg,image/jpg"
-            multiple
-            style="display: none"
-          />
-          <p class="hint">Imagens fixadas</p>
-          <div id="preview" class="preview-grid" aria-live="polite"></div>
+          <label>
+            CPF do herdeiro
+            <input
+              type="text"
+              name="cpfherdeiro"
+              maxlength="14"
+              inputmode="numeric"
+              placeholder="CPF com 11 digitos"
+              required
+            />
+          </label>
+        </fieldset>
+        <div class="image-description">
+          <p class="subtitle">Adicione as fotos de:</p>
+          <p class="subtitle-item">Certidão de óbito</p>
+          <p class="subtitle-item">Comprovante de cadastro</p>
+        </div>
+        <label for="images" class="image-add">Escolher Imagens</label>
+        <input
+          type="file"
+          name="images"
+          id="images"
+          accept="image/png,image/jpeg,image/jpg"
+          multiple
+          style="display: none"
+        />
+        <p class="hint">Imagens fixadas</p>
+        <div id="preview" class="preview-grid" aria-live="polite"></div>
 
-          <button type="submit" class="button">Enviar</button>
-        </form>
+        <button type="submit" class="button">Enviar</button>
+      </form>
 
-        <p id="status" class="status"></p>
-      </section>
+      <p id="status" class="status"></p>
     </main>
 
     <script src="/app.js"></script>

@@ -44,6 +44,20 @@ function normalizeText(value) {
   return (value || "").toString().trim();
 }
 
+function normalizeOptionalEmail(email) {
+  return email || "E-mail não informado.";
+}
+
+function formatSubmissionDate(date = new Date()) {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
 function generatePdfBuffer(formData, files) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 40 });
@@ -55,14 +69,20 @@ function generatePdfBuffer(formData, files) {
 
     doc.fontSize(20).text("Formulario de Recadastro", { align: "center" });
     doc.moveDown();
-    doc.fontSize(12);
 
+    doc.fontSize(16).text("Dados do propietário");
+    doc.fontSize(12);
     doc.text(`Nome: ${formData.nome}`);
     doc.text(`CPF: ${formData.cpf}`);
     doc.text(`Telefone: ${formData.telefone}`);
-    doc.text(`Familiar: ${formData.familiar}`);
-    doc.text(`Email: ${formData.email}`);
-    doc.text(`Data de envio: ${new Date().toISOString()}`);
+    doc.text(`Email: ${normalizeOptionalEmail(formData.email)}`);
+    doc.moveDown();
+    doc.fontSize(16).text("Dados do herdeiro");
+    doc.fontSize(12);
+    doc.text(`Herdeiro: ${formData.familiar}`);
+    doc.text(`CPF Herdeiro: ${formData.cpfherdeiro}`);
+    doc.moveDown();
+    doc.text(`Data de envio: ${formatSubmissionDate()}`);
 
     if (files.length > 0) {
       doc.addPage();
@@ -113,8 +133,9 @@ async function sendEmailWithResend({
   nome,
   cpf,
   telefone,
-  familiar,
   email,
+  familiar,
+  cpfherdeiro,
   pdfBuffer,
 }) {
   const payload = {
@@ -126,10 +147,10 @@ async function sendEmailWithResend({
       `Nome: ${nome}`,
       `CPF: ${cpf}`,
       `Telefone: ${telefone}`,
-      `Familiar: ${familiar}`,
-      `Email informado: ${email}`,
+      `Email informado: ${normalizeOptionalEmail(email)}`,
+      `Herdeiro: ${familiar}`,
+      `CPF Herdeiro: ${cpfherdeiro}`,
     ].join("\n"),
-    reply_to: email,
     attachments: [
       {
         filename: `formulario-${Date.now()}.pdf`,
@@ -137,6 +158,10 @@ async function sendEmailWithResend({
       },
     ],
   };
+
+  if (email) {
+    payload.reply_to = email;
+  }
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -182,10 +207,11 @@ app.post("/api/send-pdf", upload.array("images", 6), async (req, res) => {
     const nome = normalizeText(req.body.nome);
     const cpf = normalizeText(req.body.cpf);
     const telefone = normalizeText(req.body.telefone);
-    const familiar = normalizeText(req.body.familiar);
     const email = normalizeText(req.body.email);
+    const familiar = normalizeText(req.body.familiar);
+    const cpfHerdeiro = normalizeText(req.body.cpfherdeiro);
 
-    if (!nome || !cpf || !telefone || !familiar || !email) {
+    if (!nome || !cpf || !telefone || !familiar || !cpfHerdeiro) {
       return res
         .status(400)
         .json({ message: "Preencha todos os campos obrigatorios." });
@@ -193,7 +219,7 @@ app.post("/api/send-pdf", upload.array("images", 6), async (req, res) => {
 
     const files = req.files || [];
     const pdfBuffer = await generatePdfBuffer(
-      { nome, cpf, telefone, familiar, email },
+      { nome, cpf, telefone, familiar, email, cpfherdeiro: cpfHerdeiro },
       files,
     );
 
@@ -201,8 +227,9 @@ app.post("/api/send-pdf", upload.array("images", 6), async (req, res) => {
       nome,
       cpf,
       telefone,
-      familiar,
       email,
+      familiar,
+      cpfherdeiro: cpfHerdeiro,
       pdfBuffer,
     });
 

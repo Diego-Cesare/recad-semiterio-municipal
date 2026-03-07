@@ -118,6 +118,19 @@ formEl.cpf.addEventListener("input", (e) => {
   e.target.value = v;
 });
 
+formEl.cpfherdeiro.addEventListener("input", (e) => {
+  let v = e.target.value.replace(/\D/g, "");
+
+  if (v.length > 11) v = v.slice(0, 11);
+
+  // Aplica a máscara progressivamente
+  v = v.replace(/^(\d{3})(\d)/, "$1.$2");
+  v = v.replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3");
+  v = v.replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4");
+
+  e.target.value = v;
+});
+
 formEl.telefone.addEventListener("input", (e) => {
   let v = e.target.value.replace(/\D/g, "").slice(0, 11);
 
@@ -139,10 +152,16 @@ formEl.addEventListener("submit", async (event) => {
   const formData = new FormData();
   formData.append("nome", formEl.nome.value.trim());
   formData.append("cpf", formEl.cpf.value.trim());
+  formData.append("cpfherdeiro", formEl.cpfherdeiro.value.trim());
   const cpfValue = formEl.cpf.value.trim();
+  const cpfHerdeiroValue = formEl.cpfherdeiro.value.trim();
 
   if (!validateCPF(cpfValue)) {
     setStatus("CPF inválido. Verifique os dados.", "error");
+    return;
+  }
+  if (!validateCPF(cpfHerdeiroValue)) {
+    setStatus("CPF do herdeiro inválido. Verifique os dados.", "error");
     return;
   }
   formData.append("telefone", formEl.telefone.value.trim());

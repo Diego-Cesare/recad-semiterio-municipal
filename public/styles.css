@@ -36,7 +36,7 @@ h1 {
 
 .subtitle {
   color: var(--muted);
-  font-size: 1rem;
+  font-size: 0.9rem;
   margin-bottom: 20px;
 }
 
@@ -46,14 +46,6 @@ h1 {
   font-weight: bold;
 }
 
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-}
-
 .hidden {
   display: none;
 }
@@ -61,6 +53,32 @@ h1 {
 form {
   display: grid;
   gap: 14px;
+}
+
+fieldset {
+  min-width: 100%;
+  border: solid 1px var(--muted);
+  border-radius: 20px;
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.container legend {
+  background-color: var(--muted);
+  color: var(--bg);
+  padding: 5px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+fieldset p {
+  font-size: 0.95rem;
+  color: var(--primary);
+  font-weight: bold;
+  border-bottom: solid 1px var(--primary);
+  margin-bottom: 1rem;
 }
 
 label {
