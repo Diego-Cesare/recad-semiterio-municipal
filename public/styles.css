@@ -152,6 +152,14 @@ input::placeholder {
   font-size: 0.9rem;
 }
 
+.type-img {
+  display: none;
+  background-color: var(--danger);
+  padding: 10px;
+  border-radius: 10px;
+  color: var(--bg);
+}
+
 .preview-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));

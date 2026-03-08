@@ -160,7 +160,7 @@ formEl.addEventListener("submit", async (event) => {
     setStatus("CPF inválido. Verifique os dados.", "error");
     return;
   }
-  if (!validateCPF(cpfHerdeiroValue)) {
+  if (cpfHerdeiroValue && !validateCPF(cpfHerdeiroValue)) {
     setStatus("CPF do herdeiro inválido. Verifique os dados.", "error");
     return;
   }

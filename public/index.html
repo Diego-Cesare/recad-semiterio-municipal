@@ -60,15 +60,13 @@
         </fieldset>
         <fieldset>
           <legend>Dados do herdeiro</legend>
-          <p>Adicione o nome do herdeiro do terreno.</p>
+          <p>
+            Havendo herdeiro, adicione o nome e o CPF. <br />Se não houver,
+            deixe vazio.
+          </p>
           <label>
             Herdeiro
-            <input
-              type="text"
-              name="familiar"
-              placeholder="Nome completo"
-              required
-            />
+            <input type="text" name="familiar" placeholder="Nome completo" />
           </label>
           <label>
             CPF do herdeiro
@@ -78,27 +76,24 @@
               maxlength="14"
               inputmode="numeric"
               placeholder="CPF com 11 digitos"
-              required
             />
           </label>
         </fieldset>
-        <div class="image-description">
-          <p class="subtitle">Adicione as fotos de:</p>
-          <p class="subtitle-item">Certidão de óbito</p>
-          <p class="subtitle-item">Comprovante de cadastro</p>
-        </div>
-        <label for="images" class="image-add">Escolher Imagens</label>
-        <input
-          type="file"
-          name="images"
-          id="images"
-          accept="image/png,image/jpeg,image/jpg"
-          multiple
-          style="display: none"
-        />
-        <p class="hint">Imagens fixadas</p>
-        <div id="preview" class="preview-grid" aria-live="polite"></div>
-
+        <fieldset>
+          <legend>Fotos dos documentos</legend>
+          <label for="images" class="image-add">Escolher Imagens</label>
+          <input
+            type="file"
+            name="images"
+            id="images"
+            accept="image/png,image/jpeg,image/jpg"
+            multiple
+            required
+            style="display: none"
+          />
+          <p class="hint">Imagens fixadas</p>
+          <div id="preview" class="preview-grid" aria-live="polite"></div>
+        </fieldset>
         <button type="submit" class="button">Enviar</button>
       </form>
 

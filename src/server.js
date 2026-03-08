@@ -44,8 +44,8 @@ function normalizeText(value) {
   return (value || "").toString().trim();
 }
 
-function normalizeOptionalEmail(email) {
-  return email || "E-mail não informado.";
+function normalizeOptionalItem(item) {
+  return item || "Não informado pelo propietário.";
 }
 
 function formatSubmissionDate(date = new Date()) {
@@ -75,12 +75,12 @@ function generatePdfBuffer(formData, files) {
     doc.text(`Nome: ${formData.nome}`);
     doc.text(`CPF: ${formData.cpf}`);
     doc.text(`Telefone: ${formData.telefone}`);
-    doc.text(`Email: ${normalizeOptionalEmail(formData.email)}`);
+    doc.text(`Email: ${normalizeOptionalItem(formData.email)}`);
     doc.moveDown();
     doc.fontSize(16).text("Dados do herdeiro");
     doc.fontSize(12);
-    doc.text(`Herdeiro: ${formData.familiar}`);
-    doc.text(`CPF Herdeiro: ${formData.cpfherdeiro}`);
+    doc.text(`Herdeiro: ${normalizeOptionalItem(formData.familiar)}`);
+    doc.text(`CPF Herdeiro: ${normalizeOptionalItem(formData.cpfherdeiro)}`);
     doc.moveDown();
     doc.text(`Data de envio: ${formatSubmissionDate()}`);
 
@@ -147,9 +147,9 @@ async function sendEmailWithResend({
       `Nome: ${nome}`,
       `CPF: ${cpf}`,
       `Telefone: ${telefone}`,
-      `Email informado: ${normalizeOptionalEmail(email)}`,
-      `Herdeiro: ${familiar}`,
-      `CPF Herdeiro: ${cpfherdeiro}`,
+      `Email informado: ${normalizeOptionalItem(email)}`,
+      `Herdeiro: ${normalizeOptionalItem(familiar)}`,
+      `CPF Herdeiro: ${normalizeOptionalItem(cpfherdeiro)}`,
     ].join("\n"),
     attachments: [
       {
@@ -211,7 +211,7 @@ app.post("/api/send-pdf", upload.array("images", 6), async (req, res) => {
     const familiar = normalizeText(req.body.familiar);
     const cpfHerdeiro = normalizeText(req.body.cpfherdeiro);
 
-    if (!nome || !cpf || !telefone || !familiar || !cpfHerdeiro) {
+    if (!nome || !cpf || !telefone) {
       return res
         .status(400)
         .json({ message: "Preencha todos os campos obrigatorios." });
